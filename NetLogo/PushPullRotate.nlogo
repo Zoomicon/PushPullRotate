@@ -551,7 +551,17 @@ continuous?
 -1000
 
 @#$#@#$#@
+## TO DO
+
+- add the rotate to avoid obstacle logic (from previous paper [see mobotsim code too])
+
+- if a master node gets too close to another node, have that one behave as slabe and get repelled (thus affecting all its links). Maybe add similar behaviour for obstacles. Can call this an "Implicit Master-Slave" behaviour (in contrast to an "Explicit Master-Slave" one)
+
+- if node gets close to link, have it rotate to get repelled, as if that node was an obstacle
+
 ## WHAT IS IT?
+
+PUSH-PULL-ROTATE SIMULATOR
 
 ## HOW IT WORKS
 
@@ -882,7 +892,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 5.1.0
+NetLogo 5.2.0
 @#$#@#$#@
 set starting-level 8
 setup
