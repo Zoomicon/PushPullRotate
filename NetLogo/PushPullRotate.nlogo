@@ -1,7 +1,8 @@
 ;;-- could implement this as tie-mode="minmax" for link breeds and add "min-length" and "max-length" to them (similarly can add "min-angle"/"max-angle")
 
 ;-- PushPullRotate
-;-- Version: 20100914
+;-- Version: 20150206
+;-- (from old Version: 20100914)
 
 extensions [profiler]
 
@@ -10,6 +11,8 @@ undirected-link-breed [rods rod]
 
 connectors-own [anchored? c-hops]
 rods-own [min-length max-length master r-hops vetoed?] ;-- assuming min-length<=max-length
+
+globals [dragging? selected]
 
 ;---------------------------------------------------------------
 
@@ -59,6 +62,16 @@ to-report make-hierarchy-connector
     set r-hops [c-hops + 1] of master
   ]
   report connector-set ([other-end] of freerods)
+end
+
+;------------------------------------------------------------
+
+to-report rod-max-stretch?
+  report (abs (rod-length - max-length)) < 0.5
+end
+
+to-report rod-max-shrink?
+  report (abs (rod-length - min-length)) < 0.5
 end
 
 ;------------------------------------------------------------
@@ -140,24 +153,37 @@ to startup
   reset
 end
 
-to reset
-  clear-all
-  ask patches [ set pcolor white ]   ;-- white background
-  reset-ticks
-  display
-end  
-
 to start
   run mode  
 end
 
+to reset
+  ;; (for this model to work with NetLogo's new plotting features,
+  ;; __clear-all-and-reset-ticks should be replaced with clear-all at
+  ;; the beginning of your setup procedure and reset-ticks at the end
+  ;; of the procedure.)
+  __clear-all-and-reset-ticks
+  set dragging? false
+  set selected nobody
+  ask patches [ set pcolor white ]   ;-- white background
+  reset-ticks
+  display
+end
+
+;---------------------------------------------------------------
+
 to go
-  if not mouse-down? [ stop ]
+  if not mouse-down? [ 
+    set dragging? false
+    stop
+  ]
   
-  let selected connector-at-mouse
-      
-  wait-mouse-up
-  
+  if not dragging? [
+    set selected connector-at-mouse
+    set dragging? true
+    if not continuous? [ wait-mouse-up ] 
+  ]
+    
   if selected = nobody [ stop ]
 
   profiler-begin
@@ -176,10 +202,12 @@ to go
   profiler-end
 end
 
-to edit-connectors
+;---------------------------------------------------------------
+
+to edit-make-connectors
   if not mouse-down? [ stop ]
   
-  let selected connector-at-mouse    
+  set selected connector-at-mouse    
 
   ifelse selected = nobody [
     create-connectors 1 [ init-connector (setpos mouse-pos) ]
@@ -191,39 +219,10 @@ to edit-connectors
   wait-mouse-up
 end
 
-to edit-move-connectors
+to edit-make-rods
   if not mouse-down? [ stop ]
   
-  let selected connector-at-mouse
-  
-  while [mouse-down?] [
-    if selected != nobody [ ;-- if no select just wait for mouse up
-      ask selected [ 
-        setpos mouse-pos ;-- drag until mouse button released
-        ask my-rods [ update-rod-minmaxlen ]
-      ]
-      display
-    ]
-  ]
-end
-
-to edit-anchor-connectors
-  if not mouse-down? [ stop ]
-
-  let selected connector-at-mouse
-  
-  if selected != nobody [
-    ask selected [ anchor (not anchored?) ] ;-- toggle anchor
-    display
-  ]
-  
-  wait-mouse-up
-end
-
-to edit-rods
-  if not mouse-down? [ stop ]
-  
-  let selected connector-at-mouse     
+  set selected connector-at-mouse     
   wait-mouse-up
   let selected2 connector-at-mouse
   if (selected = nobody) or (selected2 = nobody) [ stop ]
@@ -241,6 +240,37 @@ to edit-rods
     ]
   ]
   display
+end
+
+;---------------------------------------------------------------
+
+to edit-move-connectors
+  if not mouse-down? [ stop ]
+  
+  set selected connector-at-mouse
+  
+  while [mouse-down?] [
+    if selected != nobody [ ;-- if no select just wait for mouse up
+      ask selected [ 
+        setpos mouse-pos ;-- drag until mouse button released
+        ;ask my-rods [ update-rod-minmaxlen ]
+      ]
+      display
+    ]
+  ]
+end
+
+to edit-anchor-connectors
+  if not mouse-down? [ stop ]
+
+  set selected connector-at-mouse
+  
+  if selected != nobody [
+    ask selected [ anchor (not anchored?) ] ;-- toggle anchor
+    display
+  ]
+  
+  wait-mouse-up
 end
 
 ;-----------------------------------------------------------
@@ -265,6 +295,8 @@ to-report connector-at-mouse
   report connector-at-pos mouse-pos
 end
 
+;-----------------------------------------------------------
+
 to update-rod-minmaxlen
   set min-length rod-length
   set max-length rod-length
@@ -281,6 +313,8 @@ to set-rod-max-length
   update-rod-color
 end
 
+;-----------------------------------------------------------
+
 to anchor [flag]
   set anchored? flag
   ifelse flag
@@ -289,10 +323,10 @@ to anchor [flag]
 end
 
 to update-rod-color
-  ifelse rod-excess-stretch?
-    [ set color green ]
-    [ ifelse rod-excess-shrink?
-        [ set color red ]
+  ifelse rod-max-shrink?
+    [ set color red ]
+    [ ifelse rod-max-stretch?
+        [ set color green ]
         [ set color black ] ]
 end
 
@@ -305,6 +339,8 @@ end
 to out-print [value]
   if output? [ output-print value ]
 end
+
+;---------------------------------------------------------------
 
 to profiler-begin
   if profiling? [
@@ -324,6 +360,7 @@ end
 
 to wait-mouse-up
   while [mouse-down?] []
+  set dragging? false
 end
 
 to-report pos
@@ -347,8 +384,8 @@ to-report mouse-pos
 end
 
 
-; Copyright 2010 George Birbilis. All rights reserved.
-; Based on NetLogo's "Planarity" (game) model
+; Copyright 2010-2015 George Birbilis. All rights reserved.
+; UI is based on NetLogo's "Planarity" (game) model
 ; The full copyright notice is in the Information tab.
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -376,11 +413,12 @@ GRAPHICS-WINDOW
 1
 1
 time
+30.0
 
 BUTTON
 430
 10
-547
+545
 55
 NIL
 start
@@ -392,6 +430,7 @@ NIL
 NIL
 NIL
 NIL
+1
 
 CHOOSER
 555
@@ -400,13 +439,13 @@ CHOOSER
 55
 mode
 mode
-"go" "edit-connectors" "edit-rods" "edit-move-connectors" "edit-anchor-connectors"
+"go" "edit-make-connectors" "edit-make-rods" "edit-move-connectors" "edit-anchor-connectors"
 0
 
 BUTTON
-875
+430
 60
-967
+545
 93
 reset
 if (user-yes-or-no? \"Reset?\") [ reset ]
@@ -418,19 +457,20 @@ NIL
 NIL
 NIL
 NIL
+1
 
 OUTPUT
-420
+430
 100
 970
-400
+405
 12
 
 SWITCH
-750
-10
-852
-43
+430
+410
+532
+443
 profiling?
 profiling?
 1
@@ -438,10 +478,10 @@ profiling?
 -1000
 
 BUTTON
-870
-10
-967
-43
+875
+410
+972
+443
 clear output
 ;if (user-yes-or-no? \"Clear output?\") [  \n  clear-output\n;]
 NIL
@@ -452,12 +492,13 @@ NIL
 NIL
 NIL
 NIL
+1
 
 BUTTON
-430
-60
-567
-93
+855
+10
+970
+43
 set rods min-length
 ask rods [ set-rod-min-length ]\ndisplay
 NIL
@@ -468,12 +509,13 @@ NIL
 NIL
 NIL
 NIL
+1
 
 BUTTON
-575
-60
-717
-93
+855
+50
+970
+83
 set rods max-length
 ask rods [ set-rod-max-length ]\ndisplay
 NIL
@@ -484,78 +526,78 @@ NIL
 NIL
 NIL
 NIL
+1
 
 SWITCH
-750
+760
+410
+863
+443
+output?
+output?
+1
+1
+-1000
+
+SWITCH
+610
 60
-853
+732
 93
-output?
-output?
+continuous?
+continuous?
 0
 1
 -1000
 
 @#$#@#$#@
-WHAT IS IT?
------------
+## WHAT IS IT?
 
+## HOW IT WORKS
 
-
-HOW IT WORKS
-------------
 .... The details are in the Procedures tab.
 
+## HOW TO USE IT
 
-HOW TO USE IT
--------------
 ...
 
+## THINGS TO NOTICE
 
-THINGS TO NOTICE
-----------------
 ...
 
+## THINGS TO TRY
 
-THINGS TO TRY
--------------
 ...
 
+## EXTENDING THE MODEL
 
-EXTENDING THE MODEL
--------------------
 ...
 
+## RELATED MODELS
 
-RELATED MODELS
---------------
 Intersecting Links Example -- has sample code for finding the point where two links intersect
 
+## CREDITS AND REFERENCES
 
-CREDITS AND REFERENCES
-----------------------
 ...
 
+## HOW TO CITE
 
-HOW TO CITE
------------
-If you mention this model in an academic publication, we ask that you include these citations for the model itself and for the NetLogo software:
+If you mention this model in an academic publication, we ask that you include these citations for the model itself and for the NetLogo software:  
 - Birbilis, G. (2010).  .. model.
-  http://ccl.northwestern.edu/netlogo/models/Planarity
+  http://ccl.northwestern.edu/netlogo/models/Planarity  
 - Wilensky, U. (1999). NetLogo. http://ccl.northwestern.edu/netlogo/. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
-In other publications, please use:
+In other publications, please use:  
 - Copyright 2010 George Birbilis. All rights reserved. See http://.../netlogo/models/...ity for terms of use.
 
+## COPYRIGHT NOTICE
 
-COPYRIGHT NOTICE
-----------------
 Copyright 2010 George Birbilis. All rights reserved.
 
-Permission to use, modify or redistribute this model is hereby granted, provided that both of the following requirements are followed:
-a) this copyright notice is included.
+Permission to use, modify or redistribute this model is hereby granted, provided that both of the following requirements are followed:  
+a) this copyright notice is included.  
 b) this model will not be redistributed for profit without permission from George Birbilis. Contact George Birbilis for appropriate licenses for redistribution for profit.
-
 @#$#@#$#@
 default
 true
@@ -840,7 +882,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 4.1.1
+NetLogo 5.1.0
 @#$#@#$#@
 set starting-level 8
 setup
