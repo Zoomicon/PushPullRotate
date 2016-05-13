@@ -88,7 +88,17 @@ to-report rod-excess-shrink?
   report (rod-length < min-length - 0.5) ;-- added error margin
 end
 
+to minmax-lengths-fix
+  if (min-length > max-length) [ ;-- swap min and max length constraints if min-length > max-length
+    let temp max-length
+    set max-length min-length
+    set min-length temp
+  ]
+end
+
 to-report rods-fix
+  ask rods [ minmax-lengths-fix ] ;-- need to call this when using buttons that set all rods' min-length or max-length in one step
+    
   let result true
   foreach (sort-by [[r-hops] of ?1 < [r-hops] of ?2] (rods with [rod-broken?]) ) [ ;-- treat rods with less r-hops first (could also try inverse ordering, but would make it harder to implement with only local interactions)
     ask ? [ set result (rod-fix and result) ]
@@ -97,9 +107,9 @@ to-report rods-fix
 end
 
 to-report rod-fix
-  if rod-excess-stretch? [ report [[rod-pull] of myself] of master ]
-  if rod-excess-shrink? [ report [[rod-push] of myself] of master ]  
-  report true
+  if rod-excess-stretch? [ report [[rod-pull] of myself] of master ] ;-- on excess stretch, PULL
+  if rod-excess-shrink? [ report [[rod-push] of myself] of master ] ;-- on excess shrink, PUSH
+  report true ;-- no excess stretch or shrink, STAY
 end
 
 to-report rod-pull
