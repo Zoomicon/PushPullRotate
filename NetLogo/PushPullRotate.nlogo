@@ -1,7 +1,7 @@
 ;;-- could implement this as tie-mode="minmax" for link breeds and add "min-length" and "max-length" to them (similarly can add "min-angle"/"max-angle")
 
 ;-- PushPullRotate
-;-- Version: 20150206
+;-- Version: 20150611
 ;-- (from old Version: 20100914)
 
 extensions [profiler]
@@ -168,16 +168,13 @@ to start
 end
 
 to reset
-  ;; (for this model to work with NetLogo's new plotting features,
-  ;; __clear-all-and-reset-ticks should be replaced with clear-all at
-  ;; the beginning of your setup procedure and reset-ticks at the end
-  ;; of the procedure.)
-  __clear-all-and-reset-ticks
+  ;; clear-all should be at beginning of setup/reset procedure and reset-ticks at end (__clear-all-and-reset-ticks is deprecated)
+  clear-all
   set dragging? false
   set selected nobody
   ask patches [ set pcolor white ]   ;-- white background
-  reset-ticks
   display
+  reset-ticks
 end
 
 ;---------------------------------------------------------------
@@ -483,7 +480,7 @@ SWITCH
 443
 profiling?
 profiling?
-1
+0
 1
 -1000
 
