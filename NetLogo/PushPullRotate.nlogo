@@ -1,8 +1,7 @@
 ;;-- could implement this as tie-mode="minmax" for link breeds and add "min-length" and "max-length" to them (similarly can add "min-angle"/"max-angle")
 
-;-- PushPullRotate
+;-- PushPullRotate (http://github.com/Zoomicon/PushPullRotate/NetLogo)
 ;-- Version: 20160719
-;-- (from old Version: 20100914)
 
 extensions [profiler]
 
@@ -157,18 +156,48 @@ to init-rod
 end
 
 ;---------------------------------------------------------------
+; INITIALIZATION
+;---------------------------------------------------------------
 
 to startup
   set-default-shape connectors "circle"
   reset
 end
 
+;---------------------------------------------------------------
+; START BUTTON
+;---------------------------------------------------------------
+
 to start
-  run mode
+  ;;output-show runresult mode ;-- this isn't supported in NetLogo Web
+
+  ifelse (mode = "go") [
+    go
+  ][
+    ifelse (mode = "edit-make-connectors") [
+      if edit-make-connectors []
+    ][
+      ifelse (mode = "edit-make-rods") [
+        if edit-make-rods []
+      ][
+        ifelse (mode = "edit-move-connectors") [
+          if edit-move-connectors []
+        ][
+          if (mode = "edit-anchor-connectors") [
+            if edit-anchor-connectors []
+          ]
+        ]
+      ]
+    ]
+  ]
 end
 
+;---------------------------------------------------------------
+; RESET BUTTON
+;---------------------------------------------------------------
+
 to reset
-  ;; clear-all should be at beginning of setup/reset procedure and reset-ticks at end (__clear-all-and-reset-ticks is deprecated)
+  ;-- clear-all should be at beginning of setup/reset procedure and reset-ticks at end (__clear-all-and-reset-ticks is deprecated)
   clear-all
   set dragging? false
   set selected nobody
@@ -177,6 +206,8 @@ to reset
   reset-ticks
 end
 
+;---------------------------------------------------------------
+; START BUTTON ACTIONS
 ;---------------------------------------------------------------
 
 to go
@@ -199,8 +230,7 @@ to go
     ifelse move mouse-pos [
       out-show "Moved"
     ][
-      beep
-      out-show "Can't adapt system"
+      out-error "Can't adapt system"
     ]
   ]
 
@@ -211,8 +241,8 @@ end
 
 ;---------------------------------------------------------------
 
-to edit-make-connectors
-  if not mouse-down? [ stop ]
+to-report edit-make-connectors
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
 
@@ -224,53 +254,67 @@ to edit-make-connectors
   display
 
   wait-mouse-up
+
+  report true
 end
 
-to edit-make-rods
-  if not mouse-down? [ stop ]
+;---------------------------------------------------------------
+
+to-report edit-make-rods
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
+  if (selected = nobody) [ report false ]
+
   wait-mouse-up
+
   let selected2 connector-at-mouse
-  if (selected = nobody) or (selected2 = nobody) [ stop ]
+  if (selected2 = nobody) [ report false ]
 
   if (selected = selected2) [
     user-message "Drag connector to other one to (un)link them using a rod"
-    stop
+    report false
   ]
 
   ask selected [
     ifelse rod-neighbor? selected2 [
       ask rod-with selected2 [ die ]
-  ][
+    ][
       create-rod-with selected2 [ init-rod update-rod-minmaxlen ]
     ]
   ]
+
   display
+
+  report true
 end
 
 ;---------------------------------------------------------------
 
-to edit-move-connectors
-  if not mouse-down? [ stop ]
+to-report edit-move-connectors
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
+  if (selected = nobody) [ report false ]
 
   while [mouse-down?] [
-    if selected != nobody [ ;-- if no select just wait for mouse up
       ask selected [
         setpos mouse-pos ;-- drag until mouse button released
         ;ask my-rods [ update-rod-minmaxlen ]
       ]
       display
     ]
-  ]
+
+  report true
 end
 
-to edit-anchor-connectors
-  if not mouse-down? [ stop ]
+;---------------------------------------------------------------
+
+to-report edit-anchor-connectors
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
+  if (selected = nobody) [ report false ]
 
   if selected != nobody [
     ask selected [ anchor (not anchored?) ] ;-- toggle anchor
@@ -278,9 +322,13 @@ to edit-anchor-connectors
   ]
 
   wait-mouse-up
+
+  report true
 end
 
-;-----------------------------------------------------------
+;---------------------------------------------------------------
+; HELPERS
+;---------------------------------------------------------------
 
 to-report connector-set [value] ;-- fix for missing <breed>-set at NetLogo 4.1.1
   report turtle-set value
@@ -293,6 +341,8 @@ end
 to-report rod-length ;-- fix for missing <breed>-length at NetLogo 4.1.1
   report link-length
 end
+
+;-----------------------------------------------------------
 
 to-report connector-at-pos [the-pos]
   report one-of connectors with [distancepos the-pos < size]
@@ -337,16 +387,25 @@ to update-rod-color
         [ set color black ] ]
 end
 
+;-----------------------------------------------------------
+; OUTPUT
 ;---------------------------------------------------------------
 
 to out-show [value]
- if output? [ output-show value ]
+  if output? [ output-show value ]
+end
+
+to out-error [value]
+  beep
+  out-show value
 end
 
 to out-print [value]
   if output? [ output-print value ]
 end
 
+;-----------------------------------------------------------
+; PROFILING (NOT SUPPORTED IN NETLOGO WEB)
 ;---------------------------------------------------------------
 
 to profiler-begin
@@ -366,11 +425,15 @@ end
 ;---------------------------------------------------------------
 
 to wait-mouse-up
-  while [mouse-down?] [ ;-- this loop (with or without an out-print in it) seems to freeze NetLogoWeb, but works fine in classic NetLogo
+  while [mouse-down?] [ ;-- this loop (with or without an out-print in it) seems to freeze NetLogo Web, but works fine in classic NetLogo
     ;out-print "waiting for mouse up"
   ]
   set dragging? false
 end
+
+;-----------------------------------------------------------
+; ABSTRACTING 2D/3D POSITIONING
+;-----------------------------------------------------------
 
 to-report pos
   ;report (list xcor ycor 0) ;-- NetLogo 4.1.1 has no mouse-zcor (for 3D mice)
@@ -449,7 +512,7 @@ CHOOSER
 mode
 mode
 "go" "edit-make-connectors" "edit-make-rods" "edit-move-connectors" "edit-anchor-connectors"
-0
+1
 
 BUTTON
 430
