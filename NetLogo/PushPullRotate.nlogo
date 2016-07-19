@@ -52,7 +52,7 @@ to make-hierarchy
   let work [make-hierarchy-connector] of self
   while [any? work][
     set work connector-set ([make-hierarchy-connector] of work) ;-- connector-set can also process (nested) lists of agentsets
-  ]  
+  ]
 end
 
 to-report make-hierarchy-connector
@@ -98,7 +98,7 @@ end
 
 to-report rods-fix
   ask rods [ minmax-lengths-fix ] ;-- need to call this when using buttons that set all rods' min-length or max-length in one step
-    
+
   let result true
   foreach (sort-by [[r-hops] of ?1 < [r-hops] of ?2] (rods with [rod-broken?]) ) [ ;-- treat rods with less r-hops first (could also try inverse ordering, but would make it harder to implement with only local interactions)
     ask ? [ set result (rod-fix and result) ]
@@ -123,11 +123,11 @@ end
 to-report rod-adapt [the-distance the-action]
   let result false
   ask other-end [
-    ifelse anchored? [ 
+    ifelse anchored? [
       ask myself [ set vetoed? true ]
       out-show word "Vetoed to " ([master] of myself)
       ;-- let result false
-    ][ 
+    ][
       face [master] of myself
       forward the-distance
       out-show word the-action ([master] of myself)
@@ -164,7 +164,7 @@ to startup
 end
 
 to start
-  run mode  
+  run mode
 end
 
 to reset
@@ -180,22 +180,22 @@ end
 ;---------------------------------------------------------------
 
 to go
-  if not mouse-down? [ 
+  if not mouse-down? [
     set dragging? false
     stop
   ]
-  
+
   if not dragging? [
     set selected connector-at-mouse
     set dragging? true
-    if not continuous? [ wait-mouse-up ] 
+    if not continuous_solving? [ wait-mouse-up ]
   ]
-    
+
   if selected = nobody [ stop ]
 
   profiler-begin
-  
-  ask selected [ 
+
+  ask selected [
     ifelse move mouse-pos [
       out-show "Moved"
     ][
@@ -213,8 +213,8 @@ end
 
 to edit-make-connectors
   if not mouse-down? [ stop ]
-  
-  set selected connector-at-mouse    
+
+  set selected connector-at-mouse
 
   ifelse selected = nobody [
     create-connectors 1 [ init-connector (setpos mouse-pos) ]
@@ -222,23 +222,23 @@ to edit-make-connectors
     ask selected [ die ]
   ]
   display
-  
+
   wait-mouse-up
 end
 
 to edit-make-rods
   if not mouse-down? [ stop ]
-  
-  set selected connector-at-mouse     
+
+  set selected connector-at-mouse
   wait-mouse-up
   let selected2 connector-at-mouse
   if (selected = nobody) or (selected2 = nobody) [ stop ]
-  
+
   if (selected = selected2) [
     user-message "Drag connector to other one to (un)link them using a rod"
     stop
   ]
-  
+
   ask selected [
     ifelse rod-neighbor? selected2 [
       ask rod-with selected2 [ die ]
@@ -253,12 +253,12 @@ end
 
 to edit-move-connectors
   if not mouse-down? [ stop ]
-  
+
   set selected connector-at-mouse
-  
+
   while [mouse-down?] [
     if selected != nobody [ ;-- if no select just wait for mouse up
-      ask selected [ 
+      ask selected [
         setpos mouse-pos ;-- drag until mouse button released
         ;ask my-rods [ update-rod-minmaxlen ]
       ]
@@ -271,12 +271,12 @@ to edit-anchor-connectors
   if not mouse-down? [ stop ]
 
   set selected connector-at-mouse
-  
+
   if selected != nobody [
     ask selected [ anchor (not anchored?) ] ;-- toggle anchor
     display
   ]
-  
+
   wait-mouse-up
 end
 
@@ -366,12 +366,14 @@ end
 ;---------------------------------------------------------------
 
 to wait-mouse-up
-  while [mouse-down?] []
+  while [mouse-down?] [ ;-- this loop (with or without an out-print in it) seems to freeze NetLogoWeb, but works fine in classic NetLogo
+    ;out-print "waiting for mouse up"
+  ]
   set dragging? false
 end
 
 to-report pos
-  ;report (list xcor ycor 0) ;-- NetLogo 4.1.1 has no mouse-zcor (for 3D mice) 
+  ;report (list xcor ycor 0) ;-- NetLogo 4.1.1 has no mouse-zcor (for 3D mice)
   report (list xcor ycor)
 end
 
@@ -386,7 +388,7 @@ to-report distancepos [the-pos]
 end
 
 to-report mouse-pos
-  ;report (list mouse-xcor mouse-ycor 0) ;-- NetLogo 4.1.1 has no mouse-zcor (for 3D mice) 
+  ;report (list mouse-xcor mouse-ycor 0) ;-- NetLogo 4.1.1 has no mouse-zcor (for 3D mice)
   report (list mouse-xcor mouse-ycor)
 end
 
@@ -480,7 +482,7 @@ SWITCH
 443
 profiling?
 profiling?
-0
+1
 1
 -1000
 
@@ -542,17 +544,17 @@ SWITCH
 443
 output?
 output?
-1
+0
 1
 -1000
 
 SWITCH
-610
+570
 60
 732
 93
-continuous?
-continuous?
+continuous_solving?
+continuous_solving?
 0
 1
 -1000
@@ -600,20 +602,20 @@ Intersecting Links Example -- has sample code for finding the point where two li
 
 ## HOW TO CITE
 
-If you mention this model in an academic publication, we ask that you include these citations for the model itself and for the NetLogo software:  
+If you mention this model in an academic publication, we ask that you include these citations for the model itself and for the NetLogo software:
 - Birbilis, G. (2010).  .. model.
-  http://ccl.northwestern.edu/netlogo/models/Planarity  
+  http://ccl.northwestern.edu/netlogo/models/Planarity
 - Wilensky, U. (1999). NetLogo. http://ccl.northwestern.edu/netlogo/. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
-In other publications, please use:  
+In other publications, please use:
 - Copyright 2010 George Birbilis. All rights reserved. See http://.../netlogo/models/...ity for terms of use.
 
 ## COPYRIGHT NOTICE
 
 Copyright 2010 George Birbilis. All rights reserved.
 
-Permission to use, modify or redistribute this model is hereby granted, provided that both of the following requirements are followed:  
-a) this copyright notice is included.  
+Permission to use, modify or redistribute this model is hereby granted, provided that both of the following requirements are followed:
+a) this copyright notice is included.
 b) this model will not be redistributed for profit without permission from George Birbilis. Contact George Birbilis for appropriate licenses for redistribution for profit.
 @#$#@#$#@
 default
@@ -899,7 +901,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 5.2.0
+NetLogo 5.3.1
 @#$#@#$#@
 set starting-level 8
 setup

@@ -165,16 +165,16 @@ to start
     go
   ][
     ifelse (mode = "edit-make-connectors") [
-      edit-make-connectors
+      if (edit-make-connectors) [ stop ]
     ][
       ifelse (mode = "edit-make-rods") [
-        edit-make-rods
+        if edit-make-rods [ stop ]
       ][
         ifelse (mode = "edit-move-connectors") [
-          edit-move-connectors
+          if edit-move-connectors [ stop]
         ][
           if (mode = "edit-anchor-connectors") [
-            edit-anchor-connectors
+            if edit-anchor-connectors [ stop ]
           ]
         ]
       ]
@@ -203,7 +203,7 @@ to go
   if not dragging? [
     set selected connector-at-mouse
     set dragging? true
-    if not continuous? [ wait-mouse-up ]
+    if not continuous_solving? [ wait-mouse-up ]
   ]
 
   if selected = nobody [ stop ]
@@ -222,73 +222,89 @@ end
 
 ;---------------------------------------------------------------
 
-to edit-make-connectors
-  if not mouse-down? [ stop ]
+to-report edit-make-connectors
+  let result false
+  if not mouse-down? [ report result ]
 
   set selected connector-at-mouse
 
   ifelse selected = nobody [
     create-connectors 1 [ init-connector (setpos mouse-pos) ]
+    set result true
   ][
     ask selected [ die ]
   ]
   ;display
 
   wait-mouse-up
+  report result
 end
 
-to edit-make-rods
-  if not mouse-down? [ stop ]
+to-report edit-make-rods
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
   wait-mouse-up
   let selected2 connector-at-mouse
-  if (selected = nobody) or (selected2 = nobody) [ stop ]
+
+  if (selected = nobody) or (selected2 = nobody) [ report false ]
 
   if (selected = selected2) [
     user-message "Drag connector to other one to (un)link them using a rod"
-    stop
+    report false
   ]
 
+  let result false
   ask selected [
     ifelse rod-neighbor? selected2 [
       ask rod-with selected2 [ die ]
-  ][
+    ][
       create-rod-with selected2 [ init-rod update-rod-minmaxlen ]
     ]
+    set result true
+    ;display
   ]
-  ;display
+
+  report result
 end
 
 ;---------------------------------------------------------------
 
-to edit-move-connectors
-  if not mouse-down? [ stop ]
+to-report edit-move-connectors
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
 
+  let result false
   while [mouse-down?] [
     if selected != nobody [ ;-- if no select just wait for mouse up
       ask selected [
         setpos mouse-pos ;-- drag until mouse button released
         ;ask my-rods [ update-rod-minmaxlen ]
       ]
+      set result true
       ;display
     ]
   ]
+
+  report result
 end
 
-to edit-anchor-connectors
-  if not mouse-down? [ stop ]
+to-report edit-anchor-connectors
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
 
+  let result false
   if selected != nobody [
     ask selected [ anchor (not anchored?) ] ;-- toggle anchor
+    set result true
     ;display
   ]
 
   wait-mouse-up
+
+  report result
 end
 
 ;-----------------------------------------------------------
@@ -361,7 +377,9 @@ end
 ;---------------------------------------------------------------
 
 to wait-mouse-up
-  while [mouse-down?] []
+  while [mouse-down?] [ ;-- this loop (with or without an out-print in it) seems to freeze NetLogoWeb, but works fine in classic NetLogo
+    ;out-print "waiting for mouse up"
+  ]
   set dragging? false
 end
 
@@ -442,7 +460,7 @@ CHOOSER
 mode
 mode
 "go" "edit-make-connectors" "edit-make-rods" "edit-move-connectors" "edit-anchor-connectors"
-0
+4
 
 BUTTON
 430
@@ -526,18 +544,18 @@ SWITCH
 443
 output?
 output?
-1
+0
 1
 -1000
 
 SWITCH
-610
+570
 60
 732
 93
-continuous?
-continuous?
-1
+continuous_solving?
+continuous_solving?
+0
 1
 -1000
 
