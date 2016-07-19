@@ -1,10 +1,7 @@
 ;;-- could implement this as tie-mode="minmax" for link breeds and add "min-length" and "max-length" to them (similarly can add "min-angle"/"max-angle")
 
-;-- PushPullRotate
 ;-- Version: 20160719
-;-- (from old Version: 20100914)
-
-extensions [profiler]
+;-- (from desktop version: 20160719)
 
 breed [connectors connector]
 undirected-link-breed [rods rod]
@@ -164,7 +161,25 @@ to startup
 end
 
 to start
-  run mode
+  ifelse (mode = "go") [
+    go
+  ][
+    ifelse (mode = "edit-make-connectors") [
+      if (edit-make-connectors) [ stop ]
+    ][
+      ifelse (mode = "edit-make-rods") [
+        if edit-make-rods [ stop ]
+      ][
+        ifelse (mode = "edit-move-connectors") [
+          if edit-move-connectors [ stop]
+        ][
+          if (mode = "edit-anchor-connectors") [
+            if edit-anchor-connectors [ stop ]
+          ]
+        ]
+      ]
+    ]
+  ]
 end
 
 to reset
@@ -173,7 +188,7 @@ to reset
   set dragging? false
   set selected nobody
   ask patches [ set pcolor white ]   ;-- white background
-  display
+  ;display
   reset-ticks
 end
 
@@ -193,91 +208,103 @@ to go
 
   if selected = nobody [ stop ]
 
-  profiler-begin
-
   ask selected [
     ifelse move mouse-pos [
       out-show "Moved"
     ][
-      beep
       out-show "Can't adapt system"
     ]
   ]
 
   ask rods [ update-rod-color ]
-  display
-  profiler-end
+  ;display
 end
 
 ;---------------------------------------------------------------
 
-to edit-make-connectors
-  if not mouse-down? [ stop ]
+to-report edit-make-connectors
+  let result false
+  if not mouse-down? [ report result ]
 
   set selected connector-at-mouse
 
   ifelse selected = nobody [
     create-connectors 1 [ init-connector (setpos mouse-pos) ]
+    set result true
   ][
     ask selected [ die ]
   ]
-  display
+  ;display
 
   wait-mouse-up
+  report result
 end
 
-to edit-make-rods
-  if not mouse-down? [ stop ]
+to-report edit-make-rods
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
   wait-mouse-up
   let selected2 connector-at-mouse
-  if (selected = nobody) or (selected2 = nobody) [ stop ]
+
+  if (selected = nobody) or (selected2 = nobody) [ report false ]
 
   if (selected = selected2) [
     user-message "Drag connector to other one to (un)link them using a rod"
-    stop
+    report false
   ]
 
+  let result false
   ask selected [
     ifelse rod-neighbor? selected2 [
       ask rod-with selected2 [ die ]
-  ][
+    ][
       create-rod-with selected2 [ init-rod update-rod-minmaxlen ]
     ]
+    set result true
+    ;display
   ]
-  display
+
+  report result
 end
 
 ;---------------------------------------------------------------
 
-to edit-move-connectors
-  if not mouse-down? [ stop ]
+to-report edit-move-connectors
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
 
+  let result false
   while [mouse-down?] [
     if selected != nobody [ ;-- if no select just wait for mouse up
       ask selected [
         setpos mouse-pos ;-- drag until mouse button released
         ;ask my-rods [ update-rod-minmaxlen ]
       ]
-      display
+      set result true
+      ;display
     ]
   ]
+
+  report result
 end
 
-to edit-anchor-connectors
-  if not mouse-down? [ stop ]
+to-report edit-anchor-connectors
+  if not mouse-down? [ report false ]
 
   set selected connector-at-mouse
 
+  let result false
   if selected != nobody [
     ask selected [ anchor (not anchored?) ] ;-- toggle anchor
-    display
+    set result true
+    ;display
   ]
 
   wait-mouse-up
+
+  report result
 end
 
 ;-----------------------------------------------------------
@@ -345,22 +372,6 @@ end
 
 to out-print [value]
   if output? [ output-print value ]
-end
-
-;---------------------------------------------------------------
-
-to profiler-begin
-  if profiling? [
-    profiler:reset
-    profiler:start
-  ]
-end
-
-to profiler-end
-  if profiling? [
-    profiler:stop
-    out-print profiler:report
-  ]
 end
 
 ;---------------------------------------------------------------
@@ -449,7 +460,7 @@ CHOOSER
 mode
 mode
 "go" "edit-make-connectors" "edit-make-rods" "edit-move-connectors" "edit-anchor-connectors"
-0
+4
 
 BUTTON
 430
@@ -475,17 +486,6 @@ OUTPUT
 405
 12
 
-SWITCH
-430
-410
-532
-443
-profiling?
-profiling?
-1
-1
--1000
-
 BUTTON
 875
 410
@@ -509,7 +509,7 @@ BUTTON
 970
 43
 set rods min-length
-ask rods [ set-rod-min-length ]\ndisplay
+ask rods [ set-rod-min-length ]\n;display
 NIL
 1
 T
@@ -526,7 +526,7 @@ BUTTON
 970
 83
 set rods max-length
-ask rods [ set-rod-max-length ]\ndisplay
+ask rods [ set-rod-max-length ]\n;display
 NIL
 1
 T
