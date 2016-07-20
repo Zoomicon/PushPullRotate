@@ -2,8 +2,11 @@
 
 ;-- PushPullRotate (http://github.com/Zoomicon/PushPullRotate/NetLogo)
 ;-- Version: 20160719
+;-- (from desktop version: 20160719)
 
-extensions [profiler]
+;-- lines commented with ";;" are not supported by NetLogoWeb
+
+;;extensions [profiler]
 
 breed [connectors connector]
 undirected-link-breed [rods rod]
@@ -175,16 +178,16 @@ to start
     go
   ][
     ifelse (mode = "edit-make-connectors") [
-      if edit-make-connectors []
+      if (edit-make-connectors) [ stop ]
     ][
       ifelse (mode = "edit-make-rods") [
-        if edit-make-rods []
+        if edit-make-rods [ stop ]
       ][
         ifelse (mode = "edit-move-connectors") [
-          if edit-move-connectors []
+          if edit-move-connectors [ stop]
         ][
           if (mode = "edit-anchor-connectors") [
-            if edit-anchor-connectors []
+            if edit-anchor-connectors [ stop ]
           ]
         ]
       ]
@@ -298,12 +301,12 @@ to-report edit-move-connectors
   if (selected = nobody) [ report false ]
 
   while [mouse-down?] [
-      ask selected [
-        setpos mouse-pos ;-- drag until mouse button released
-        ;ask my-rods [ update-rod-minmaxlen ]
-      ]
-      display
+    ask selected [
+      setpos mouse-pos ;-- drag until mouse button released
+      ;ask my-rods [ update-rod-minmaxlen ]
     ]
+    display
+  ]
 
   report true
 end
@@ -396,7 +399,7 @@ to out-show [value]
 end
 
 to out-error [value]
-  beep
+  ;;beep
   out-show value
 end
 
@@ -410,24 +413,24 @@ end
 
 to profiler-begin
   if profiling? [
-    profiler:reset
-    profiler:start
+;;    profiler:reset
+;;    profiler:start
   ]
 end
 
 to profiler-end
   if profiling? [
-    profiler:stop
-    out-print profiler:report
+;;    profiler:stop
+;;    out-print profiler:report
   ]
 end
 
 ;---------------------------------------------------------------
 
 to wait-mouse-up
-  while [mouse-down?] [ ;-- this loop (with or without an out-print in it) seems to freeze NetLogo Web, but works fine in classic NetLogo
-    ;out-print "waiting for mouse up"
-  ]
+;;  while [mouse-down?] [ ;-- this loop (with or without an out-print in it) seems to freeze NetLogo Web, but works fine in classic NetLogo
+;;    ;out-print "waiting for mouse up"
+;;  ]
   set dragging? false
 end
 
@@ -512,7 +515,7 @@ CHOOSER
 mode
 mode
 "go" "edit-make-connectors" "edit-make-rods" "edit-move-connectors" "edit-anchor-connectors"
-1
+0
 
 BUTTON
 430
