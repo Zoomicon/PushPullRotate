@@ -34,5 +34,6 @@ DH=[0 0 0 q1;
     -pi/2 0 0 q14;
     pi/2 0 d15 0;];
 
-docNode=myppr(DH)   
+%docNode=myppr(DH) 
+docNode=myppr_generic(DH) 
     
