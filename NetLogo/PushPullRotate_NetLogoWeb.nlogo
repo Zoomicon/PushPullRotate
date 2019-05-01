@@ -102,8 +102,8 @@ to-report rods-fix
   ask rods [ minmax-lengths-fix ] ;-- need to call this when using buttons that set all rods' min-length or max-length in one step
 
   let result true
-  foreach (sort-by [[r-hops] of ?1 < [r-hops] of ?2] (rods with [rod-broken?]) ) [ ;-- treat rods with less r-hops first (could also try inverse ordering, but would make it harder to implement with only local interactions)
-    ask ? [ set result (rod-fix and result) ]
+  foreach (sort-by [ [?1 ?2] -> [r-hops] of ?1 < [r-hops] of ?2 ] (rods with [rod-broken?]) ) [ ;-- treat rods with less r-hops first (could also try inverse ordering, but would make it harder to implement with only local interactions)
+    ?1 -> ask ?1 [ set result (rod-fix and result) ]
   ]
   report result
 end
@@ -466,10 +466,10 @@ end
 GRAPHICS-WINDOW
 5
 10
-417
-443
-100
-100
+415
+421
+-1
+-1
 2.0
 1
 12
@@ -965,9 +965,8 @@ false
 0
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
-
 @#$#@#$#@
-NetLogo 5.3.1
+NetLogo 6.1.0-RC2
 @#$#@#$#@
 set starting-level 8
 setup
@@ -985,7 +984,6 @@ true
 0
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
-
 @#$#@#$#@
 1
 @#$#@#$#@
